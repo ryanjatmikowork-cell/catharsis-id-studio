@@ -1,3 +1,4 @@
+```javascript
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -155,23 +156,35 @@ function providers() {
 async function callGemini(systemPrompt, userPrompt) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
-  const model = process.env.GEMINI_MODEL || 'gemini-4-hydrogen';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-      generationConfig: { temperature: 0.7 }
-    })
-  });
-  if (!res.ok) {
-    const errTxt = await res.text();
-    throw new Error(`Gemini HTTP ${res.status}: ${errTxt.slice(0, 140)}`);
+  const candidates = [...new Set([
+    process.env.GEMINI_MODEL || 'gemini-4-hydrogen',
+    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash',
+    'gemini-flash-latest'
+  ])];
+  let lastErr = null;
+  for (const model of candidates) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { temperature: 0.7 }
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || null;
+      if (text) return text;
+    } else {
+      const errTxt = await res.text();
+      lastErr = new Error(`Gemini (${model}) HTTP ${res.status}: ${errTxt.slice(0, 140)}`);
+      if (![404, 429, 500, 503].includes(res.status)) throw lastErr;
+    }
   }
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || null;
+  throw lastErr || new Error('Gemini tidak merespons');
 }
 
 async function askLLM(sys, prompt) {
@@ -499,7 +512,9 @@ app.post('/api/chat', async (req, res) => {
   }
   const ctx = `Status sistem: ${db.crons.filter(c => c.status === 'Aktif').length} cron aktif, ${db.motionVideos.length} video Motion, ${db.shorts.length} Shorts, Buffer=${Boolean(process.env.BUFFER_ACCESS_TOKEN)}.`;
   reply = await askLLM(`Kamu agen ${agent.name} di dashboard Catharsis ID. Jawab singkat bahasa Indonesia berdasarkan data nyata ini: ${ctx}`, text)
-    || `Aman semua. ${db.crons.filter(c => c.status === 'Aktif').length} cron aktif, ${db.motionVideos.length} video Motion. Tambahkan GEMINI_API_KEY di Railway Variables untuk chat AI penuh.`;
+    || (process.env.GEMINI_API_KEY
+      ? `Server Gemini sedang sibuk sementara (503). Status lokal tetap aman: ${db.crons.filter(c => c.status === 'Aktif').length} cron aktif, ${db.motionVideos.length} video Motion. Coba kirim pesan lagi sebentar ya.`
+      : `Aman semua. ${db.crons.filter(c => c.status === 'Aktif').length} cron aktif, ${db.motionVideos.length} video Motion. Tambahkan GEMINI_API_KEY di Railway Variables untuk chat AI penuh.`);
   db.chatMessages.push({ id: 'm-' + (Date.now() + 1), sender: 'agent', agentName: agent.name, text: reply, time });
   saveDB(db);
   res.json({ ok: true, reply });
@@ -511,3 +526,4 @@ app.listen(PORT, () => {
   console.log(`Catharsis ID Studio (Gemini + Buffer) aktif di port ${PORT}`);
   reloadCrons();
 });
+```
