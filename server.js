@@ -237,13 +237,28 @@ async function generateScriptWithAI(customTitle) {
 async function callBufferGraphQL(query, variables = {}) {
   const token = process.env.BUFFER_ACCESS_TOKEN;
   if (!token) return null;
-  const res = await fetch('https://api.buffer.com/graphql', {
+  const res = await fetch('https://api.buffer.com', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ query, variables })
   });
   if (!res.ok) throw new Error(`Buffer HTTP ${res.status}`);
-  return res.json();
+  const json = await res.json();
+  if (json.errors?.length) throw new Error(json.errors[0].message || 'Buffer GraphQL error');
+  return json;
+}
+
+async function getBufferChannels() {
+  const orgRes = await callBufferGraphQL(`query GetOrganizations { account { organizations { id name } } }`);
+  const orgs = orgRes?.data?.account?.organizations || [];
+  const all = [];
+  for (const org of orgs) {
+    const chRes = await callBufferGraphQL(
+      `query GetChannels { channels(input: { organizationId: ${JSON.stringify(org.id)} }) { id name displayName service } }`
+    );
+    all.push(...(chRes?.data?.channels || []));
+  }
+  return all;
 }
 
 async function publishViaBuffer({ title, caption }) {
@@ -251,10 +266,7 @@ async function publishViaBuffer({ title, caption }) {
   if (!token) return { ok: true, mode: 'simulated', message: 'BUFFER_ACCESS_TOKEN belum diisi' };
 
   try {
-    // Ambil daftar channel jika BUFFER_CHANNEL_IDS belum ditentukan
-    const channelsRes = await callBufferGraphQL(`query { account { organizations { channels { id name service } } } }`);
-    const orgs = channelsRes?.data?.account?.organizations || [];
-    const discovered = orgs.flatMap(o => o.channels || []);
+    const discovered = await getBufferChannels();
     const targetIds = process.env.BUFFER_CHANNEL_IDS
       ? process.env.BUFFER_CHANNEL_IDS.split(',').map(s => s.trim()).filter(Boolean)
       : discovered.map(c => c.id);
@@ -388,8 +400,7 @@ app.get('/api/test-connections', async (req, res) => {
   }
   if (process.env.BUFFER_ACCESS_TOKEN) {
     try {
-      const r = await callBufferGraphQL(`query { account { organizations { channels { id name service } } } }`);
-      const ch = (r?.data?.account?.organizations || []).flatMap(o => o.channels || []);
+      const ch = await getBufferChannels();
       status.bufferTest = `OK: ${ch.length} channel terdeteksi`;
       status.bufferChannels = ch;
     } catch (e) { status.bufferTest = `ERROR: ${e.message}`; }
@@ -525,3 +536,4 @@ app.listen(PORT, () => {
   console.log(`Catharsis ID Studio (Gemini + Buffer) aktif di port ${PORT}`);
   reloadCrons();
 });
+```
