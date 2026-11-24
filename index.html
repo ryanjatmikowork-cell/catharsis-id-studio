@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>catharsisID — Full-Stack AI Content Factory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f6f8f9; color: #0f172a; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    @keyframes floatChar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    .float-char { animation: floatChar 2.4s ease-in-out infinite; }
+  </style>
+</head>
+<body class="antialiased overflow-x-hidden">
+  <div class="min-h-screen flex flex-col lg:flex-row">
+    <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-slate-200/80 z-30">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-teal-400 font-extrabold text-sm">cID</div>
+        <div>
+          <div class="text-base font-extrabold tracking-tight text-slate-900 leading-none">catharsis<span class="text-teal-600">ID</span></div>
+          <div class="text-[11px] text-slate-400 font-medium mt-0.5">Full-Stack Studio</div>
+        </div>
+      </div>
+      <nav class="flex-1 overflow-y-auto px-3 py-3 space-y-5 no-scrollbar">
+        <div>
+          <div class="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Utama</div>
+          <div id="desktop-nav-main" class="space-y-0.5"></div>
+        </div>
+        <div>
+          <div class="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Otomasi &amp; Studio</div>
+          <div id="desktop-nav-auto" class="space-y-0.5"></div>
+        </div>
+        <div>
+          <div class="px-2.5 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex justify-between">
+            <span>Folder Proyek</span><span class="text-teal-600">Server</span>
+          </div>
+          <div id="desktop-folders" class="space-y-0.5"></div>
+        </div>
+      </nav>
+      <div class="p-3 border-t border-slate-100">
+        <button id="sidebar-chat-btn" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-left">
+          <div class="w-7 h-7 rounded-lg bg-teal-500/20 text-teal-300 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
+          <div class="min-w-0 flex-1">
+            <div class="text-xs font-semibold truncate">Chat Agen AI</div>
+            <div class="text-[10px] text-slate-400 truncate">Terhubung ke Server API</div>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="flex-1 lg:pl-64 flex flex-col min-h-screen pb-20 lg:pb-6">
+      <header class="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200/80 px-4 lg:px-6 py-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h1 id="page-title" class="text-base lg:text-lg font-bold text-slate-900 truncate">Overview</h1>
+            <p id="page-subtitle" class="text-[11px] text-slate-500 truncate">Menghubungkan ke server...</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="api-status-pill" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">● API Live</span>
+            <button id="btn-sync" class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+            <div class="relative">
+              <button id="btn-notif" class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 relative">
+                <i data-lucide="bell" class="w-4 h-4"></i>
+                <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">0</span>
+              </button>
+              <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[90vw] bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50">
+                <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                  <span class="text-xs font-bold">Aktivitas Server</span>
+                  <button id="btn-clear-notif" class="text-[11px] text-teal-600 font-medium">Tandai dibaca</button>
+                </div>
+                <div id="notif-list" class="space-y-2 max-h-72 overflow-y-auto"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main id="main-content" class="flex-1 p-4 lg:p-6 max-w-[1440px] w-full mx-auto space-y-5"></main>
+    </div>
+
+    <nav class="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-30 px-2 py-1.5">
+      <div id="mobile-bottom-nav" class="grid grid-cols-5 gap-1"></div>
+    </nav>
+
+    <div id="toast-root" class="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+  </div>
+
+  <script>
+    let db = null;
+    let ui = { tab: 'overview', selectedFormat: 'Tipe A', activeChatAgent: 'claude-cli', selectedSbId: null, cronFilter: 'semua' };
+    let charts = {};
+
+    async function api(url, opts = {}) {
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+        ...opts
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    function fmt(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.', ',') + ' jt';
+      if (n >= 1000) return (n / 1000).toFixed(1).replace('.', ',') + ' rb';
+      return String(n);
+    }
+
+    function toast(title, desc = '') {
+      const el = document.createElement('div');
+      el.className = 'pointer-events-auto px-3.5 py-2.5 rounded-xl border border-teal-200 bg-white shadow-lg max-w-xs';
+      el.innerHTML = `<div class="text-xs font-bold text-slate-900">${title}</div>${desc ? `<div class="text-[11px] text-slate-500 mt-0.5">${desc}</div>` : ''}`;
+      document.getElementById('toast-root').appendChild(el);
+      setTimeout(() => el.remove(), 3200);
+    }
+
+    function charSVG(mood = 'neutral', size = 80) {
+      const mouth = mood === 'sad'
+        ? '<path d="M44 58 Q50 53 56 58" stroke="#0f172a" stroke-width="2.6" fill="none" stroke-linecap="round"/>'
+        : '<path d="M45 56 Q50 59 55 56" stroke="#0f172a" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+      return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" class="shrink-0">
+        <path d="M26 98 C26 74 36 68 50 68 C64 68 74 74 74 98 Z" fill="#14b8a6" stroke="#0f172a" stroke-width="3"/>
+        <circle cx="50" cy="40" r="24" fill="#0f172a"/>
+        <path d="M28 33 Q50 18 72 33" fill="none" stroke="#14b8a6" stroke-width="5.5" stroke-linecap="round"/>
+        <circle cx="50" cy="44" r="21" fill="#fff" stroke="#0f172a" stroke-width="3"/>
+        <circle cx="41" cy="45" r="7.5" fill="#fff" stroke="#0f172a" stroke-width="2.8"/>
+        <circle cx="59" cy="45" r="7.5" fill="#fff" stroke="#0f172a" stroke-width="2.8"/>
+        <line x1="48.5" y1="45" x2="51.5" y2="45" stroke="#0f172a" stroke-width="2.8"/>
+        <circle cx="41" cy="45" r="2.2" fill="#0f172a"/><circle cx="59" cy="45" r="2.2" fill="#0f172a"/>${mouth}</svg>`;
+    }
+
+    async function refreshState() {
+      db = await api('/api/state');
+      if (!ui.selectedSbId && db.motionVideos.length) ui.selectedSbId = db.motionVideos[0].id;
+      render();
+    }
+
+    const NAV_MAIN = [
+      { id: 'overview', label: 'Overview', icon: 'home' },
+      { id: 'storyboard', label: 'Storyboard & Folder', icon: 'clapperboard' },
+      { id: 'revisi', label: 'Revisi Tanpa Editor', icon: 'message-square-diff' },
+      { id: 'antrean', label: 'Antrean & 12 Agen', icon: 'list-checks' },
+      { id: 'shorts', label: 'Shorts Potongan', icon: 'scissors' },
+      { id: 'motion', label: 'Motion (5 Format)', icon: 'sparkles' },
+      { id: 'statistik', label: 'Statistik', icon: 'line-chart' }
+    ];
+    const NAV_AUTO = [
+      { id: 'cron', label: 'Cron & Automasi', icon: 'clock' },
+      { id: 'voicebox', label: 'Voicebox Studio', icon: 'mic' },
+      { id: 'chat', label: 'Chat Agen AI', icon: 'bot' }
+    ];
+
+    function renderNav() {
+      const btn = (i) => `<button data-tab="${i.id}" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition ${ui.tab === i.id ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100'}"><i data-lucide="${i.icon}" class="w-4 h-4"></i><span class="truncate">${i.label}</span></button>`;
+      document.getElementById('desktop-nav-main').innerHTML = NAV_MAIN.map(btn).join('');
+      document.getElementById('desktop-nav-auto').innerHTML = NAV_AUTO.map(btn).join('');
+      document.getElementById('desktop-folders').innerHTML = Object.entries(db.folders || {}).map(([f, list]) => `
+        <button data-tab="storyboard" class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-[11px] text-slate-500 hover:bg-slate-50">
+          <span class="flex items-center gap-1.5"><i data-lucide="folder" class="w-3.5 h-3.5"></i>${f}</span>
+          <span class="text-[10px]">${list.length}</span>
+        </button>
+      `).join('');
+
+      const mob = [
+        { id: 'overview', label: 'Overview', icon: 'home' },
+        { id: 'cron', label: 'Cron', icon: 'clock' },
+        { id: 'motion', label: 'Motion', icon: 'sparkles' },
+        { id: 'revisi', label: 'Revisi', icon: 'message-square-diff' },
+        { id: 'chat', label: 'Chat', icon: 'bot' }
+      ];
+      document.getElementById('mobile-bottom-nav').innerHTML = mob.map(i => `
+        <button data-tab="${i.id}" class="flex flex-col items-center py-1 ${ui.tab === i.id ? 'text-teal-600' : 'text-slate-400'}">
+          <i data-lucide="${i.icon}" class="w-4 h-4"></i><span class="text-[10px] font-semibold mt-0.5">${i.label}</span>
+        </button>
+      `).join('');
+
+      document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', () => { ui.tab = el.dataset.tab; render(); }));
+    }
+
+    function renderOverview() {
+      const p = db.platforms;
+      const activeCrons = db.crons.filter(c => c.status === 'Aktif').length;
+      const connectedCount = Object.values(db.providers || {}).filter(Boolean).length;
+      return `
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-5">
+            <div>
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Performa 4 Platform</div>
+              <div class="text-xs text-slate-500 mt-0.5">${activeCrons} cron aktif · ${connectedCount} integrasi API terhubung</div>
+            </div>
+            ${Object.values(p).map(pl => `
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" style="background:${pl.color}"></span>
+                <div>
+                  <div class="text-xs font-extrabold">${fmt(pl.followers)} <span class="font-normal text-slate-400">${pl.name}</span></div>
+                  <div class="text-[11px] text-slate-500">${fmt(pl.views)} views</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <button id="btn-run-full-cycle" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold">▶ Jalankan Siklus Otomatis</button>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-4"><div class="text-[11px] text-slate-500">Motion Harian</div><div class="text-2xl font-extrabold mt-1">${db.motionVideos.length}</div><div class="text-[11px] text-teal-600 font-semibold">Remotion 60 fps</div></div>
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-4"><div class="text-[11px] text-slate-500">Shorts Potongan</div><div class="text-2xl font-extrabold mt-1">${db.shorts.length}</div><div class="text-[11px] text-slate-500">Tayang 3x/hari</div></div>
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-4"><div class="text-[11px] text-slate-500">Kuota Codex 5 Jam</div><div class="text-2xl font-extrabold mt-1">${db.quota.fiveHour}%</div><div class="text-[11px] text-slate-500">Render subuh: ${db.renderSubuhEnabled ? 'Aktif' : 'Mati'}</div></div>
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-4"><div class="text-[11px] text-slate-500">Status Integrasi API</div><div class="text-xs font-semibold mt-1.5 text-slate-700">LLM: ${db.providers.anthropic || db.providers.openai ? 'Live' : 'Simulasi'} · TTS: ${db.providers.elevenlabs ? 'ElevenLabs' : 'Browser/Lokal'}</div></div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4">
+          <h2 class="text-sm font-bold mb-3">Daftar Video Utama</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead><tr class="border-b text-[10px] uppercase text-slate-400"><th class="py-2">Video</th><th>Visual</th><th>Render</th><th>Status</th><th class="text-right">Aksi</th></tr></thead>
+              <tbody class="divide-y divide-slate-100">
+                ${db.longVideos.map(v => `
+                  <tr>
+                    <td class="py-2.5 font-semibold">${v.code} — ${v.title}</td>
+                    <td>${v.visual}</td><td>${v.render}</td>
+                    <td><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100">${v.status}</span></td>
+                    <td class="text-right"><button data-pub-long="${v.id}" class="px-2.5 py-1 rounded-lg bg-teal-50 text-teal-700 font-semibold">${v.status === 'Publish' ? 'Tayang ✓' : 'Publish'}</button></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCron() {
+      const list = db.crons.filter(c => ui.cronFilter === 'semua' || c.status.toLowerCase() === ui.cronFilter);
+      return `
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex gap-1.5">
+            ${['semua', 'aktif', 'paused', 'error'].map(f => `<button data-cf="${f}" class="px-3 py-1.5 rounded-xl text-xs font-semibold capitalize ${ui.cronFilter === f ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-600'}">${f}</button>`).join('')}
+          </div>
+          <form id="add-cron-form" class="flex gap-2">
+            <input name="name" placeholder="Nama cron baru..." class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-white" required />
+            <input name="expr" value="0 8 * * *" class="w-28 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-mono bg-white" required />
+            <button type="submit" class="px-3 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-semibold">+ Cron</button>
+          </form>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${list.map(c => `
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-4 flex flex-col justify-between gap-3">
+              <div>
+                <div class="flex items-center justify-between gap-2">
+                  <div class="font-bold text-sm"><span class="px-1.5 py-0.5 rounded bg-slate-100 text-[11px] mr-1.5">${c.code}</span>${c.name}</div>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${c.status === 'Aktif' ? 'bg-emerald-50 text-emerald-700' : c.status === 'Error' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'}">${c.status}</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">${c.desc}</p>
+                <div class="text-[11px] font-mono text-slate-600 mt-2">${c.schedule} · Terakhir: ${c.lastRun}</div>
+              </div>
+              <div class="flex gap-2">
+                <button data-run-cron="${c.id}" class="flex-1 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-semibold">▶ Jalankan</button>
+                <button data-tog-cron="${c.id}" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold">${c.status === 'Aktif' ? 'Pause' : 'Aktifkan'}</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderMotion() {
+      const formats = ['Tipe A', 'Tipe B', 'Tipe C', 'Tipe D', 'Serial'];
+      return `
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 space-y-3">
+          <div class="flex flex-wrap gap-2">
+            ${formats.map(f => `<button data-fmt="${f}" class="px-3 py-1.5 rounded-xl text-xs font-bold border ${ui.selectedFormat === f ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-200 text-slate-600'}">${f}</button>`).join('')}
+          </div>
+          <form id="motion-form" class="flex flex-col sm:flex-row gap-2">
+            <input name="title" placeholder="Topik video Motion baru (kosongkan untuk riset tren otomatis)..." class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs" />
+            <button type="submit" class="px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-semibold">Render ${ui.selectedFormat} (60 fps)</button>
+          </form>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${db.motionVideos.map(v => `
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-4 flex gap-3">
+              <div class="w-16 h-24 rounded-xl flex items-center justify-center shrink-0" style="background:${v.bgTheme}">${charSVG('neutral', 48)}</div>
+              <div class="min-w-0 flex-1">
+                <div class="flex justify-between text-[10px] font-bold"><span class="text-teal-700">● ${v.status} (${v.progress}%)</span><span class="text-slate-400">${v.format}</span></div>
+                <div class="text-xs font-bold mt-1">${v.title}</div>
+                <div class="flex gap-1 mt-2">${v.platforms.map(p => `<span class="px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-bold">${p}</span>`).join('')}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderRevisi() {
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          ${db.revisions.map(r => `
+            <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden">
+              <div class="aspect-video p-5 flex items-center justify-between gap-4" style="background:${r.bgColor}">
+                <div class="flex-1">
+                  <span class="px-2 py-0.5 rounded bg-black/35 text-white text-[10px] font-bold">${r.videoCode} · ${r.slot}</span>
+                  <div class="text-lg font-extrabold mt-2" style="color:${r.accentColor}">${r.headline}</div>
+                </div>
+                ${charSVG(r.mood, 100)}
+              </div>
+              <div class="p-4 space-y-3">
+                <div class="text-xs font-bold">${r.videoCode} — ${r.title}</div>
+                <div class="text-[11px] text-slate-500">Terakhir: "${r.lastComment}" · <span class="text-emerald-600 font-semibold">${r.status}</span></div>
+                <form data-rev-id="${r.id}" class="flex gap-2">
+                  <input name="comment" placeholder="Contoh: ganti warna latar jadi lebih terang / teksnya ganti..." class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs" required />
+                  <button type="submit" class="px-3.5 py-2 rounded-xl bg-teal-600 text-white text-xs font-semibold">Render Ulang</button>
+                </form>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderAntrean() {
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl border border-slate-200/80 p-4 space-y-3">
+            <div class="flex justify-between items-center"><h2 class="text-sm font-bold">Limit Codex</h2><button id="btn-reset-q" class="px-2.5 py-1 rounded-lg bg-slate-100 text-xs font-semibold">Reset</button></div>
+            ${[['ImageGen', db.quota.imageGen], ['5 Jam', db.quota.fiveHour], ['Mingguan', db.quota.weekly]].map(([l, p]) => `
+              <div><div class="flex justify-between text-xs mb-1"><span>${l}</span><strong>${p}%</strong></div><div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-500" style="width:${p}%"></div></div></div>
+            `).join('')}
+          </div>
+          <div class="bg-slate-900 text-white rounded-2xl p-4 flex flex-col justify-between">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-teal-300">🌙 Render Subuh 00:00–05:45</span>
+              <button id="btn-tog-subuh" class="px-3 py-1 rounded-lg text-xs font-bold ${db.renderSubuhEnabled ? 'bg-teal-500 text-slate-950' : 'bg-slate-700'}">${db.renderSubuhEnabled ? 'Aktif' : 'Mati'}</button>
+            </div>
+            <p class="text-xs text-slate-300 mt-3">12 Agen AI terhubung ke server backend untuk eksekusi paralel dan penjadwalan subuh.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          ${db.agents.map(a => `
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-3.5 flex items-start gap-3">
+              <div class="w-9 h-9 rounded-xl ${a.color} text-white text-xs font-extrabold flex items-center justify-center shrink-0">${a.name.slice(0, 2).toUpperCase()}</div>
+              <div class="min-w-0 flex-1">
+                <div class="flex justify-between items-center gap-1">
+                  <span class="text-xs font-bold truncate">${a.name} <span class="text-[10px] text-slate-400">${a.engine}</span></span>
+                  <button data-tog-agent="${a.id}" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700">${a.status}</button>
+                </div>
+                <div class="text-[11px] text-slate-500 mt-0.5">${a.role}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderShorts() {
+      return `
+        <form id="short-form" class="bg-white rounded-2xl border border-slate-200/80 p-4 grid grid-cols-1 sm:grid-cols-4 gap-2">
+          <input name="hook" placeholder="Hook Shorts baru..." class="sm:col-span-2 px-3 py-2 rounded-xl border border-slate-200 text-xs" required />
+          <input name="range" value="1:10–2:18 dari 6:15" class="px-3 py-2 rounded-xl border border-slate-200 text-xs" required />
+          <button type="submit" class="px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-semibold">+ Potong Shorts</button>
+        </form>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          ${db.shorts.map(s => `
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-4 flex flex-col justify-between gap-3">
+              <div>
+                <div class="flex justify-between text-xs font-bold"><span>${s.label}</span><span class="text-teal-700">${s.status}</span></div>
+                <div class="p-3 rounded-xl bg-slate-900 text-teal-300 text-xs font-extrabold mt-2">${s.hook}</div>
+                <div class="text-[11px] text-slate-500 mt-2">${s.range} · ${s.dur} dtk</div>
+              </div>
+              ${s.status !== 'Sudah tayang' ? `<button data-pub-short="${s.id}" class="w-full py-1.5 rounded-xl bg-teal-600 text-white text-xs font-semibold">Tayangkan ke 4 Platform</button>` : '<div class="text-[11px] text-emerald-600 font-semibold">✓ Tayang di YT/IG/TT/FB</div>'}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderStoryboard() {
+      const vid = db.motionVideos.find(v => v.id === ui.selectedSbId) || db.motionVideos[0];
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 p-4 space-y-2">
+            <h2 class="text-sm font-bold">Folder Proyek Server (Live)</h2>
+            ${Object.entries(db.folders || {}).map(([f, files]) => `
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="text-xs font-bold">${f} (${files.length})</div>
+                <div class="mt-1 space-y-0.5 text-[11px] font-mono text-slate-600">${files.slice(0, 6).map(x => `<div class="truncate">• ${x}</div>`).join('') || '<div class="text-slate-400">(kosong)</div>'}</div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200/80 p-4 space-y-3">
+            <div class="flex justify-between items-center">
+              <h2 class="text-sm font-bold">Storyboard Scene</h2>
+              <select id="sb-select" class="px-3 py-1.5 rounded-xl border text-xs font-semibold">${db.motionVideos.map(v => `<option value="${v.id}" ${v.id === vid?.id ? 'selected' : ''}>#${v.code} — ${v.title.slice(0, 38)}</option>`).join('')}</select>
+            </div>
+            <div class="space-y-2">${(vid?.scenes || []).map(s => `<div class="p-3 rounded-xl bg-slate-50 border text-xs"><strong>0${s.no} · ${s.label}</strong><div class="mt-1">VO: "${s.vo}"</div><div class="text-slate-500">Visual: ${s.visual}</div></div>`).join('')}</div>
+            <form id="sb-form" class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-2">
+              <input name="vo" placeholder="Naskah VO..." class="sm:col-span-5 px-3 py-2 rounded-xl border text-xs" required />
+              <input name="visual" placeholder="Arahan visual..." class="sm:col-span-5 px-3 py-2 rounded-xl border text-xs" required />
+              <button class="sm:col-span-2 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold">+ Scene</button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStatistik() {
+      return `
+        <div class="flex justify-between items-center bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-900">
+          <span>Data diagregasi dari YouTube, Meta Graph, dan Buffer (TikTok).</span>
+          <button id="btn-sync-st" class="px-3 py-1 rounded-lg bg-white border font-semibold">Sinkronkan</button>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4">
+          <h2 class="text-sm font-bold mb-3">Pertumbuhan Follower Multi-Platform</h2>
+          <div class="relative h-64"><canvas id="st-chart"></canvas></div>
+        </div>
+      `;
+    }
+
+    function renderVoicebox() {
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-5 space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="text-xs font-bold">Voicebox / ElevenLabs Studio</div>
+              <button id="btn-vb-srv" class="px-3 py-1.5 rounded-xl text-xs font-bold ${db.voiceboxServerRunning ? 'bg-rose-50 text-rose-600' : 'bg-emerald-600 text-white'}">${db.voiceboxServerRunning ? 'Matikan Server Lokal' : 'Jalankan Server Lokal'}</button>
+            </div>
+            <form id="vb-form" class="space-y-3">
+              <div class="grid grid-cols-2 gap-2">
+                <select name="engine" class="px-3 py-2 rounded-xl border text-xs font-semibold">
+                  <option value="voicebox">Voicebox Lokal (Gratis)</option>
+                  <option value="elevenlabs">ElevenLabs Cloud API</option>
+                </select>
+                <select name="lang" class="px-3 py-2 rounded-xl border text-xs font-semibold">
+                  <option value="Indonesia">Indonesia</option><option value="English">English</option>
+                </select>
+              </div>
+              <textarea name="text" rows="4" class="w-full p-3 rounded-xl border text-xs">Bayangkan kamu bangun pagi, dan semua kontenmu sudah jalan otomatis di 4 platform.</textarea>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold">Generate Audio &amp; Simpan ke 04-Audio</button>
+            </form>
+          </div>
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-4 space-y-2.5">
+            <h3 class="text-sm font-bold">Riwayat Audio</h3>
+            ${db.voiceboxHistory.map(h => `
+              <div class="p-3 rounded-xl bg-slate-50 border text-xs">
+                <div class="text-[10px] font-bold text-teal-700">${h.voice} · ${h.engine} · ${h.duration}</div>
+                <p class="mt-1 text-slate-700">"${h.text}"</p>
+                ${h.audioUrl ? `<audio controls src="${h.audioUrl}" class="w-full mt-2 h-8"></audio>` : `<button data-speak="${encodeURIComponent(h.text)}" class="mt-2 text-[11px] font-bold text-slate-900 underline">Putar via Browser TTS</button>`}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderChat() {
+      return `
+        <div class="bg-white rounded-2xl border border-slate-200/80 flex flex-col h-[calc(100vh-11rem)] min-h-[460px]">
+          <div class="p-3 border-b flex justify-between items-center bg-slate-50">
+            <div class="text-xs font-bold">Chat Kontrol Agen AI (Server API)</div>
+            <select id="chat-agent-sel" class="px-2.5 py-1 rounded-lg border text-xs font-semibold">
+              ${['claude-cli', 'sys-codex', 'openclaw', 'agy-cli'].map(id => {
+                const a = db.agents.find(x => x.id === id);
+                return a ? `<option value="${a.id}" ${ui.activeChatAgent === a.id ? 'selected' : ''}>${a.name} (${a.engine})</option>` : '';
+              }).join('')}
+            </select>
+          </div>
+          <div class="flex-1 overflow-y-auto p-4 space-y-2.5">
+            ${db.chatMessages.map(m => `
+              <div class="flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}">
+                <div class="max-w-[80%] px-4 py-2.5 rounded-2xl text-xs whitespace-pre-line ${m.sender === 'user' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'}">
+                  ${m.sender === 'agent' ? `<div class="text-[10px] font-bold text-teal-700 mb-0.5">${m.agentName}</div>` : ''}${m.text}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <form id="chat-form" class="p-3 border-t flex gap-2">
+            <input name="text" placeholder="Ketik perintah (contoh: Upload hari ini aman? atau jalankan naskah & render)..." class="flex-1 px-3 py-2 rounded-xl border text-xs" required />
+            <button type="submit" class="px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold">Kirim</button>
+          </form>
+        </div>
+      `;
+    }
+
+    function render() {
+      if (!db) return;
+      renderNav();
+      document.getElementById('page-title').textContent = ui.tab.toUpperCase();
+      document.getElementById('page-subtitle').textContent = `Sinkron langsung dengan server · ${db.serverTime || ''}`;
+
+      const unread = db.notifications.filter(n => n.unread).length;
+      const b = document.getElementById('notif-badge');
+      b.textContent = unread;
+      b.classList.toggle('hidden', unread === 0);
+      document.getElementById('notif-list').innerHTML = db.notifications.map(n => `<div class="p-2 rounded-xl bg-slate-50 text-xs"><strong>${n.title}</strong><div class="text-[11px] text-slate-500">${n.desc}</div></div>`).join('');
+
+      const map = { overview: renderOverview, cron: renderCron, motion: renderMotion, revisi: renderRevisi, antrean: renderAntrean, shorts: renderShorts, storyboard: renderStoryboard, statistik: renderStatistik, voicebox: renderVoicebox, chat: renderChat };
+      document.getElementById('main-content').innerHTML = (map[ui.tab] || renderOverview)();
+      bindEvents();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function bindEvents() {
+      const runFull = document.getElementById('btn-run-full-cycle');
+      if (runFull) runFull.addEventListener('click', async () => {
+        await api('/api/motion/render', { method: 'POST', body: JSON.stringify({ format: ui.selectedFormat }) });
+        toast('Siklus Otomatis Berjalan', 'Naskah disetor & render 60 fps dimulai');
+        await refreshState();
+        setTimeout(refreshState, 2200);
+      });
+
+      document.querySelectorAll('[data-pub-long]').forEach(b => b.addEventListener('click', async () => {
+        await api(`/api/long-videos/${b.dataset.pubLong}/publish`, { method: 'POST' });
+        toast('Dipublikasikan'); await refreshState();
+      }));
+
+      document.querySelectorAll('[data-cf]').forEach(b => b.addEventListener('click', () => { ui.cronFilter = b.dataset.cf; render(); }));
+      document.querySelectorAll('[data-run-cron]').forEach(b => b.addEventListener('click', async () => {
+        await api(`/api/crons/${b.dataset.runCron}/run`, { method: 'POST' });
+        toast('Cron Dijalankan'); await refreshState(); setTimeout(refreshState, 2200);
+      }));
+      document.querySelectorAll('[data-tog-cron]').forEach(b => b.addEventListener('click', async () => {
+        await api(`/api/crons/${b.dataset.togCron}/toggle`, { method: 'POST' });
+        await refreshState();
+      }));
+      const addCron = document.getElementById('add-cron-form');
+      if (addCron) addCron.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        await api('/api/crons', { method: 'POST', body: JSON.stringify({ name: fd.get('name'), expr: fd.get('expr') }) });
+        toast('Cron Ditambahkan'); await refreshState();
+      });
+
+      document.querySelectorAll('[data-fmt]').forEach(b => b.addEventListener('click', () => { ui.selectedFormat = b.dataset.fmt; render(); }));
+      const mForm = document.getElementById('motion-form');
+      if (mForm) mForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const title = new FormData(e.target).get('title');
+        await api('/api/motion/render', { method: 'POST', body: JSON.stringify({ title, format: ui.selectedFormat }) });
+        toast('Render Dimulai', 'Menulis script ke 02-Script & render Remotion');
+        await refreshState(); setTimeout(refreshState, 2200);
+      });
+
+      document.querySelectorAll('[data-rev-id]').forEach(f => f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const comment = new FormData(e.target).get('comment');
+        await api(`/api/revisions/${f.dataset.revId}/comment`, { method: 'POST', body: JSON.stringify({ comment }) });
+        toast('Revisi Dirender Ulang'); await refreshState();
+      }));
+
+      const resetQ = document.getElementById('btn-reset-q');
+      if (resetQ) resetQ.addEventListener('click', async () => { await api('/api/quota/reset', { method: 'POST' }); await refreshState(); });
+      const togSubuh = document.getElementById('btn-tog-subuh');
+      if (togSubuh) togSubuh.addEventListener('click', async () => { await api('/api/settings/subuh', { method: 'POST' }); await refreshState(); });
+      document.querySelectorAll('[data-tog-agent]').forEach(b => b.addEventListener('click', async () => {
+        await api(`/api/agents/${b.dataset.togAgent}/toggle`, { method: 'POST' }); await refreshState();
+      }));
+
+      const sForm = document.getElementById('short-form');
+      if (sForm) sForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        await api('/api/shorts', { method: 'POST', body: JSON.stringify({ hook: fd.get('hook'), range: fd.get('range') }) });
+        toast('Shorts Ditambahkan'); await refreshState();
+      });
+      document.querySelectorAll('[data-pub-short]').forEach(b => b.addEventListener('click', async () => {
+        await api(`/api/shorts/${b.dataset.pubShort}/publish`, { method: 'POST' }); await refreshState();
+      }));
+
+      const sbSel = document.getElementById('sb-select');
+      if (sbSel) sbSel.addEventListener('change', () => { ui.selectedSbId = sbSel.value; render(); });
+      const sbForm = document.getElementById('sb-form');
+      if (sbForm) sbForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        await api(`/api/storyboard/${ui.selectedSbId}/scenes`, { method: 'POST', body: JSON.stringify({ vo: fd.get('vo'), visual: fd.get('visual') }) });
+        toast('Scene Disimpan'); await refreshState();
+      });
+
+      const syncSt = document.getElementById('btn-sync-st');
+      if (syncSt) syncSt.addEventListener('click', async () => { await api('/api/stats/sync', { method: 'POST' }); toast('Statistik Tersinkron'); await refreshState(); });
+      const stCanvas = document.getElementById('st-chart');
+      if (stCanvas && typeof Chart !== 'undefined') {
+        if (charts.st) charts.st.destroy();
+        charts.st = new Chart(stCanvas, {
+          type: 'line',
+          data: {
+            labels: ['12 Okt', '26 Okt', '9 Nov', '24 Nov'],
+            datasets: [
+              { label: 'Instagram', data: [180, 1340, 1540, db.platforms.instagram.followers], borderColor: '#ec4899', tension: 0.35 },
+              { label: 'YouTube', data: [90, 210, 320, db.platforms.youtube.followers], borderColor: '#14b8a6', tension: 0.35 },
+              { label: 'TikTok', data: [25, 62, 104, db.platforms.tiktok.followers], borderColor: '#0f172a', tension: 0.35 }
+            ]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+
+      const vbSrv = document.getElementById('btn-vb-srv');
+      if (vbSrv) vbSrv.addEventListener('click', async () => { await api('/api/voicebox/server-toggle', { method: 'POST' }); await refreshState(); });
+      const vbForm = document.getElementById('vb-form');
+      if (vbForm) vbForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const text = fd.get('text');
+        const out = await api('/api/voicebox/generate', { method: 'POST', body: JSON.stringify({ text, engine: fd.get('engine'), lang: fd.get('lang') }) });
+        toast('Audio Dibuat', out.record.mode);
+        await refreshState();
+        if (!out.record.audioUrl && 'speechSynthesis' in window) {
+          const u = new SpeechSynthesisUtterance(text); u.lang = fd.get('lang') === 'English' ? 'en-US' : 'id-ID';
+          window.speechSynthesis.speak(u);
+        }
+      });
+      document.querySelectorAll('[data-speak]').forEach(b => b.addEventListener('click', () => {
+        if ('speechSynthesis' in window) {
+          const u = new SpeechSynthesisUtterance(decodeURIComponent(b.dataset.speak)); u.lang = 'id-ID';
+          window.speechSynthesis.speak(u);
+        }
+      }));
+
+      const chatSel = document.getElementById('chat-agent-sel');
+      if (chatSel) chatSel.addEventListener('change', () => { ui.activeChatAgent = chatSel.value; });
+      const chatForm = document.getElementById('chat-form');
+      if (chatForm) chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = new FormData(e.target).get('text');
+        await api('/api/chat', { method: 'POST', body: JSON.stringify({ agentId: ui.activeChatAgent, text }) });
+        await refreshState();
+      });
+    }
+
+    document.getElementById('sidebar-chat-btn').addEventListener('click', () => { ui.tab = 'chat'; render(); });
+    document.getElementById('btn-sync').addEventListener('click', () => refreshState().then(() => toast('Data Server Diperbarui')));
+    document.getElementById('btn-notif').addEventListener('click', () => document.getElementById('notif-panel').classList.toggle('hidden'));
+    document.getElementById('btn-clear-notif').addEventListener('click', async () => { await api('/api/notifications/read', { method: 'POST' }); await refreshState(); });
+
+    refreshState();
+  </script>
+</body>
+</html>
